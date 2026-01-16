@@ -4,6 +4,7 @@
 
 use numpy::{PyArray1, PyReadonlyArray1};
 use pyo3::prelude::*;
+use rayon::prelude::*;
 
 use crate::utils::shuffle_with_key;
 
@@ -21,14 +22,16 @@ pub fn row_md5_encrypt<'py>(
 
     let x_array = shuffle_with_key(w, key);
 
-    let mut new_pixels = vec![0i32; w * h];
-
-    for i in 0..w {
-        for j in 0..h {
+    let total_pixels = w * h;
+    let new_pixels: Vec<i32> = (0..total_pixels)
+        .into_par_iter()
+        .map(|idx| {
+            let i = idx % w;
+            let j = idx / w;
             let m = x_array[(x_array[j % w] as usize + i) % w] as usize;
-            new_pixels[i + j * w] = pixels[m + j * w];
-        }
-    }
+            pixels[m + j * w]
+        })
+        .collect();
 
     PyArray1::from_vec(py, new_pixels)
 }
@@ -47,13 +50,22 @@ pub fn row_md5_decrypt<'py>(
 
     let x_array = shuffle_with_key(w, key);
 
-    let mut new_pixels = vec![0i32; w * h];
-
-    for i in 0..w {
-        for j in 0..h {
+    // Build mapping in parallel
+    let total_pixels = w * h;
+    let mapping: Vec<(usize, i32)> = (0..total_pixels)
+        .into_par_iter()
+        .map(|idx| {
+            let i = idx % w;
+            let j = idx / w;
             let m = x_array[(x_array[j % w] as usize + i) % w] as usize;
-            new_pixels[m + j * w] = pixels[i + j * w];
-        }
+            (m + j * w, pixels[idx])
+        })
+        .collect();
+
+    // Scatter results
+    let mut new_pixels = vec![0i32; total_pixels];
+    for (dst, val) in mapping {
+        new_pixels[dst] = val;
     }
 
     PyArray1::from_vec(py, new_pixels)

@@ -4,6 +4,7 @@
 
 use numpy::{PyArray1, PyReadonlyArray1};
 use pyo3::prelude::*;
+use rayon::prelude::*;
 
 use crate::utils::shuffle_with_key;
 
@@ -33,18 +34,20 @@ pub fn block_md5_encrypt<'py>(
     let block_width = new_width / xbc;
     let block_height = new_height / ybc;
 
-    let mut new_pixels = vec![0i32; new_width * new_height];
-
-    for i in 0..new_width {
-        for j in 0..new_height {
+    let total_pixels = new_width * new_height;
+    let new_pixels: Vec<i32> = (0..total_pixels)
+        .into_par_iter()
+        .map(|idx| {
+            let i = idx % new_width;
+            let j = idx / new_width;
             let mut n = j;
             let mut m = (x_array[(n / block_height) % xbc] as usize * block_width + i) % new_width;
             m = x_array[m / block_width] as usize * block_width + m % block_width;
             n = (y_array[m / block_width % ybc] as usize * block_height + n) % new_height;
             n = y_array[n / block_height] as usize * block_height + n % block_height;
-            new_pixels[i + j * new_width] = pixels[(m % w) + (n % h) * w];
-        }
-    }
+            pixels[(m % w) + (n % h) * w]
+        })
+        .collect();
 
     (
         PyArray1::from_vec(py, new_pixels),
@@ -75,17 +78,26 @@ pub fn block_md5_decrypt<'py>(
     let block_width = w / xbc;
     let block_height = h / ybc;
 
-    let mut new_pixels = vec![0i32; w * h];
-
-    for i in 0..w {
-        for j in 0..h {
+    // Build inverse mapping in parallel
+    let total_pixels = w * h;
+    let mapping: Vec<(usize, i32)> = (0..total_pixels)
+        .into_par_iter()
+        .map(|idx| {
+            let i = idx % w;
+            let j = idx / w;
             let mut n = j;
             let mut m = (x_array[(n / block_height) % xbc] as usize * block_width + i) % w;
             m = x_array[m / block_width] as usize * block_width + m % block_width;
             n = (y_array[m / block_width % ybc] as usize * block_height + n) % h;
             n = y_array[n / block_height] as usize * block_height + n % block_height;
-            new_pixels[m + n * w] = pixels[(i % w) + (j % h) * w];
-        }
+            (m + n * w, pixels[idx])
+        })
+        .collect();
+
+    // Scatter results
+    let mut new_pixels = vec![0i32; total_pixels];
+    for (dst, val) in mapping {
+        new_pixels[dst] = val;
     }
 
     PyArray1::from_vec(py, new_pixels)

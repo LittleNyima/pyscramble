@@ -4,6 +4,7 @@
 
 use numpy::{PyArray1, PyReadonlyArray1};
 use pyo3::prelude::*;
+use rayon::prelude::*;
 
 use crate::utils::gilbert2d;
 
@@ -23,13 +24,29 @@ pub fn tomato_scramble_encrypt<'py>(
     let positions = gilbert2d(width, height);
 
     let loop_position = pixel_count - offset;
-    let mut new_pixels = vec![0i32; pixel_count];
 
-    for i in 0..loop_position {
-        new_pixels[positions[i + offset] as usize] = pixels[positions[i] as usize];
-    }
-    for i in loop_position..pixel_count {
-        new_pixels[positions[i - loop_position] as usize] = pixels[positions[i] as usize];
+    // Build mapping in parallel
+    let mapping: Vec<(usize, i32)> = (0..pixel_count)
+        .into_par_iter()
+        .map(|i| {
+            if i < loop_position {
+                (
+                    positions[i + offset] as usize,
+                    pixels[positions[i] as usize],
+                )
+            } else {
+                (
+                    positions[i - loop_position] as usize,
+                    pixels[positions[i] as usize],
+                )
+            }
+        })
+        .collect();
+
+    // Scatter results
+    let mut new_pixels = vec![0i32; pixel_count];
+    for (dst, val) in mapping {
+        new_pixels[dst] = val;
     }
 
     PyArray1::from_vec(py, new_pixels)
@@ -51,13 +68,29 @@ pub fn tomato_scramble_decrypt<'py>(
     let positions = gilbert2d(width, height);
 
     let loop_position = pixel_count - offset;
-    let mut new_pixels = vec![0i32; pixel_count];
 
-    for i in 0..loop_position {
-        new_pixels[positions[i] as usize] = pixels[positions[i + offset] as usize];
-    }
-    for i in loop_position..pixel_count {
-        new_pixels[positions[i] as usize] = pixels[positions[i - loop_position] as usize];
+    // Build mapping in parallel
+    let mapping: Vec<(usize, i32)> = (0..pixel_count)
+        .into_par_iter()
+        .map(|i| {
+            if i < loop_position {
+                (
+                    positions[i] as usize,
+                    pixels[positions[i + offset] as usize],
+                )
+            } else {
+                (
+                    positions[i] as usize,
+                    pixels[positions[i - loop_position] as usize],
+                )
+            }
+        })
+        .collect();
+
+    // Scatter results
+    let mut new_pixels = vec![0i32; pixel_count];
+    for (dst, val) in mapping {
+        new_pixels[dst] = val;
     }
 
     PyArray1::from_vec(py, new_pixels)

@@ -4,6 +4,7 @@
 
 use numpy::{PyArray1, PyReadonlyArray1, PyReadonlyArray3, PyUntypedArrayMethods};
 use pyo3::prelude::*;
+use rayon::prelude::*;
 
 /// Convert RGBA pixel array to integer array
 /// pixels shape: (height, width, 4) -> flatten to (height*width,) int32
@@ -19,16 +20,17 @@ pub fn pixels_to_int<'py>(
     let pixel_count = height * width;
 
     let data = pixels.as_slice().unwrap();
-    let mut result = Vec::with_capacity(pixel_count);
-
-    for i in 0..pixel_count {
-        let base = i * 4;
-        let r = data[base] as i32;
-        let g = data[base + 1] as i32;
-        let b = data[base + 2] as i32;
-        let a = data[base + 3] as i32;
-        result.push((a << 24) | (r << 16) | (g << 8) | b);
-    }
+    let result: Vec<i32> = (0..pixel_count)
+        .into_par_iter()
+        .map(|i| {
+            let base = i * 4;
+            let r = data[base] as i32;
+            let g = data[base + 1] as i32;
+            let b = data[base + 2] as i32;
+            let a = data[base + 3] as i32;
+            (a << 24) | (r << 16) | (g << 8) | b
+        })
+        .collect();
 
     PyArray1::from_vec(py, result)
 }
@@ -41,19 +43,17 @@ pub fn int_to_pixels<'py>(
     int_pixels: PyReadonlyArray1<i32>,
 ) -> Bound<'py, PyArray1<u8>> {
     let data = int_pixels.as_slice().unwrap();
-    let pixel_count = data.len();
-    let mut result = Vec::with_capacity(pixel_count * 4);
 
-    for &pixel in data {
-        let r = ((pixel >> 16) & 0xFF) as u8;
-        let g = ((pixel >> 8) & 0xFF) as u8;
-        let b = (pixel & 0xFF) as u8;
-        let a = ((pixel >> 24) & 0xFF) as u8;
-        result.push(r);
-        result.push(g);
-        result.push(b);
-        result.push(a);
-    }
+    let result: Vec<u8> = data
+        .par_iter()
+        .flat_map(|&pixel| {
+            let r = ((pixel >> 16) & 0xFF) as u8;
+            let g = ((pixel >> 8) & 0xFF) as u8;
+            let b = (pixel & 0xFF) as u8;
+            let a = ((pixel >> 24) & 0xFF) as u8;
+            [r, g, b, a]
+        })
+        .collect();
 
     PyArray1::from_vec(py, result)
 }
