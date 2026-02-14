@@ -54,13 +54,17 @@ def _int_to_pixels(int_pixels: NDArray[np.int32], width: int, height: int) -> ND
     return flat.reshape(height, width, -1)
 
 
+def _get_height_width(pixels: NDArray[np.uint8]) -> Tuple[int, int]:
+    """Extract image width and height from pixel array shape."""
+    height, width = pixels.shape[:2]
+    return height, width
+
+
 # ==================== Tomato Scramble ====================
 
 
 def tomato_scramble_encrypt(
     pixels: NDArray[np.uint8],
-    width: int,
-    height: int,
     key: float = 1.0,
 ) -> NDArray[np.uint8]:
     """
@@ -70,13 +74,12 @@ def tomato_scramble_encrypt(
 
     Args:
         pixels: Input pixel array with shape (height, width, 4)
-        width: Image width
-        height: Image height
         key: Encryption key (default 1.0)
 
     Returns:
         Encrypted pixel array
     """
+    height, width = _get_height_width(pixels)
     int_pixels = _pixels_to_int(pixels)
     result = _core.tomato_scramble_encrypt(int_pixels, width, height, key)
     return _int_to_pixels(result, width, height)
@@ -84,8 +87,6 @@ def tomato_scramble_encrypt(
 
 def tomato_scramble_decrypt(
     pixels: NDArray[np.uint8],
-    width: int,
-    height: int,
     key: float = 1.0,
 ) -> NDArray[np.uint8]:
     """
@@ -95,13 +96,12 @@ def tomato_scramble_decrypt(
 
     Args:
         pixels: Encrypted pixel array with shape (height, width, 4)
-        width: Image width
-        height: Image height
         key: Decryption key (default 1.0)
 
     Returns:
         Decrypted pixel array
     """
+    height, width = _get_height_width(pixels)
     int_pixels = _pixels_to_int(pixels)
     result = _core.tomato_scramble_decrypt(int_pixels, width, height, key)
     return _int_to_pixels(result, width, height)
@@ -112,8 +112,6 @@ def tomato_scramble_decrypt(
 
 def per_pixel_md5_encrypt(
     pixels: NDArray[np.uint8],
-    width: int,
-    height: int,
     key: str,
 ) -> NDArray[np.uint8]:
     """
@@ -123,13 +121,12 @@ def per_pixel_md5_encrypt(
 
     Args:
         pixels: Input pixel array with shape (height, width, 4)
-        width: Image width
-        height: Image height
         key: Encryption key (string)
 
     Returns:
         Encrypted pixel array
     """
+    height, width = _get_height_width(pixels)
     int_pixels = _pixels_to_int(pixels)
     result = _core.per_pixel_md5_encrypt(int_pixels, width, height, key)
     return _int_to_pixels(result, width, height)
@@ -137,8 +134,6 @@ def per_pixel_md5_encrypt(
 
 def per_pixel_md5_decrypt(
     pixels: NDArray[np.uint8],
-    width: int,
-    height: int,
     key: str,
 ) -> NDArray[np.uint8]:
     """
@@ -148,13 +143,12 @@ def per_pixel_md5_decrypt(
 
     Args:
         pixels: Encrypted pixel array with shape (height, width, 4)
-        width: Image width
-        height: Image height
         key: Decryption key (string)
 
     Returns:
         Decrypted pixel array
     """
+    height, width = _get_height_width(pixels)
     int_pixels = _pixels_to_int(pixels)
     result = _core.per_pixel_md5_decrypt(int_pixels, width, height, key)
     return _int_to_pixels(result, width, height)
@@ -165,8 +159,6 @@ def per_pixel_md5_decrypt(
 
 def row_md5_encrypt(
     pixels: NDArray[np.uint8],
-    width: int,
-    height: int,
     key: str,
 ) -> NDArray[np.uint8]:
     """
@@ -176,13 +168,12 @@ def row_md5_encrypt(
 
     Args:
         pixels: Input pixel array with shape (height, width, 4)
-        width: Image width
-        height: Image height
         key: Encryption key (string)
 
     Returns:
         Encrypted pixel array
     """
+    height, width = _get_height_width(pixels)
     int_pixels = _pixels_to_int(pixels)
     result = _core.row_md5_encrypt(int_pixels, width, height, key)
     return _int_to_pixels(result, width, height)
@@ -190,8 +181,6 @@ def row_md5_encrypt(
 
 def row_md5_decrypt(
     pixels: NDArray[np.uint8],
-    width: int,
-    height: int,
     key: str,
 ) -> NDArray[np.uint8]:
     """
@@ -201,13 +190,12 @@ def row_md5_decrypt(
 
     Args:
         pixels: Encrypted pixel array with shape (height, width, 4)
-        width: Image width
-        height: Image height
         key: Decryption key (string)
 
     Returns:
         Decrypted pixel array
     """
+    height, width = _get_height_width(pixels)
     int_pixels = _pixels_to_int(pixels)
     result = _core.row_md5_decrypt(int_pixels, width, height, key)
     return _int_to_pixels(result, width, height)
@@ -289,8 +277,6 @@ def block_md5_decrypt(
 
 def row_logistic_encrypt(
     pixels: NDArray[np.uint8],
-    width: int,
-    height: int,
     key: float,
 ) -> NDArray[np.uint8]:
     """
@@ -300,13 +286,12 @@ def row_logistic_encrypt(
 
     Args:
         pixels: Input pixel array with shape (height, width, 4)
-        width: Image width
-        height: Image height
         key: Encryption key (float, should be in range (0, 1))
 
     Returns:
         Encrypted pixel array
     """
+    height, width = _get_height_width(pixels)
     int_pixels = _pixels_to_int(pixels)
     result = _core.row_logistic_encrypt(int_pixels, width, height, key)
     return _int_to_pixels(result, width, height)
@@ -314,8 +299,6 @@ def row_logistic_encrypt(
 
 def row_logistic_decrypt(
     pixels: NDArray[np.uint8],
-    width: int,
-    height: int,
     key: float,
 ) -> NDArray[np.uint8]:
     """
@@ -325,13 +308,12 @@ def row_logistic_decrypt(
 
     Args:
         pixels: Encrypted pixel array with shape (height, width, 4)
-        width: Image width
-        height: Image height
         key: Decryption key (float, should be in range (0, 1))
 
     Returns:
         Decrypted pixel array
     """
+    height, width = _get_height_width(pixels)
     int_pixels = _pixels_to_int(pixels)
     result = _core.row_logistic_decrypt(int_pixels, width, height, key)
     return _int_to_pixels(result, width, height)
@@ -342,8 +324,6 @@ def row_logistic_decrypt(
 
 def row_column_logistic_encrypt(
     pixels: NDArray[np.uint8],
-    width: int,
-    height: int,
     key: float,
 ) -> NDArray[np.uint8]:
     """
@@ -353,13 +333,12 @@ def row_column_logistic_encrypt(
 
     Args:
         pixels: Input pixel array with shape (height, width, 4)
-        width: Image width
-        height: Image height
         key: Encryption key (float, should be in range (0, 1))
 
     Returns:
         Encrypted pixel array
     """
+    height, width = _get_height_width(pixels)
     int_pixels = _pixels_to_int(pixels)
     result = _core.row_column_logistic_encrypt(int_pixels, width, height, key)
     return _int_to_pixels(result, width, height)
@@ -367,8 +346,6 @@ def row_column_logistic_encrypt(
 
 def row_column_logistic_decrypt(
     pixels: NDArray[np.uint8],
-    width: int,
-    height: int,
     key: float,
 ) -> NDArray[np.uint8]:
     """
@@ -378,13 +355,12 @@ def row_column_logistic_decrypt(
 
     Args:
         pixels: Encrypted pixel array with shape (height, width, 4)
-        width: Image width
-        height: Image height
         key: Decryption key (float, should be in range (0, 1))
 
     Returns:
         Decrypted pixel array
     """
+    height, width = _get_height_width(pixels)
     int_pixels = _pixels_to_int(pixels)
     result = _core.row_column_logistic_decrypt(int_pixels, width, height, key)
     return _int_to_pixels(result, width, height)

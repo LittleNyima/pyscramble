@@ -52,17 +52,16 @@ import pyscramble
 # Load an image as RGBA
 image = Image.open("input.png").convert("RGBA")
 pixels = np.array(image, dtype=np.uint8)
-height, width = pixels.shape[:2]
 
 # Encrypt with Tomato Scramble
 key = 1.0
-encrypted = pyscramble.tomato_scramble_encrypt(pixels, width, height, key)
+encrypted = pyscramble.tomato_scramble_encrypt(pixels, key)
 
 # Save encrypted image
 Image.fromarray(encrypted).save("encrypted.png")
 
 # Decrypt
-decrypted = pyscramble.tomato_scramble_decrypt(encrypted, width, height, key)
+decrypted = pyscramble.tomato_scramble_decrypt(encrypted, key)
 
 # Verify
 assert np.array_equal(decrypted, pixels)
@@ -78,16 +77,15 @@ Based on the **Gilbert 2D space-filling curve**. Provides a unique scrambling pa
 import pyscramble
 
 # Encrypt
-encrypted = pyscramble.tomato_scramble_encrypt(pixels, width, height, key=1.0)
+encrypted = pyscramble.tomato_scramble_encrypt(pixels, key=1.0)
 
 # Decrypt
-decrypted = pyscramble.tomato_scramble_decrypt(encrypted, width, height, key=1.0)
+decrypted = pyscramble.tomato_scramble_decrypt(encrypted, key=1.0)
 ```
 
 **Parameters:**
+
 - `pixels`: Input RGBA pixel array with shape `(height, width, 4)`
-- `width`: Image width
-- `height`: Image height
 - `key`: Encryption key (float, default: 1.0)
 
 ### 2. Per-Pixel MD5 Scramble
@@ -98,16 +96,15 @@ Uses **MD5 hash-based per-pixel scrambling**. Each pixel position is shuffled ba
 import pyscramble
 
 # Encrypt
-encrypted = pyscramble.per_pixel_md5_encrypt(pixels, width, height, key="secret_key")
+encrypted = pyscramble.per_pixel_md5_encrypt(pixels, key="secret_key")
 
 # Decrypt
-decrypted = pyscramble.per_pixel_md5_decrypt(encrypted, width, height, key="secret_key")
+decrypted = pyscramble.per_pixel_md5_decrypt(encrypted, key="secret_key")
 ```
 
 **Parameters:**
+
 - `pixels`: Input RGBA pixel array with shape `(height, width, 4)`
-- `width`: Image width
-- `height`: Image height
 - `key`: Encryption key (string)
 
 ### 3. Row MD5 Scramble
@@ -118,16 +115,15 @@ Uses **MD5 hash-based row pixel scrambling**. Pixels within each row are shuffle
 import pyscramble
 
 # Encrypt
-encrypted = pyscramble.row_md5_encrypt(pixels, width, height, key="secret_key")
+encrypted = pyscramble.row_md5_encrypt(pixels, key="secret_key")
 
 # Decrypt
-decrypted = pyscramble.row_md5_decrypt(encrypted, width, height, key="secret_key")
+decrypted = pyscramble.row_md5_decrypt(encrypted, key="secret_key")
 ```
 
 **Parameters:**
+
 - `pixels`: Input RGBA pixel array with shape `(height, width, 4)`
-- `width`: Image width
-- `height`: Image height
 - `key`: Encryption key (string)
 
 ### 4. Block MD5 Scramble
@@ -138,6 +134,7 @@ Uses **MD5 hash-based block scrambling**. The image is divided into blocks which
 import pyscramble
 
 # Encrypt (returns padded dimensions)
+height, width = pixels.shape[:2]
 encrypted, new_width, new_height = pyscramble.block_md5_encrypt(
     pixels, width, height,
     key="secret_key",
@@ -158,6 +155,7 @@ decrypted_original = decrypted[:height, :width]
 ```
 
 **Parameters:**
+
 - `pixels`: Input RGBA pixel array with shape `(height, width, 4)`
 - `width`: Image width
 - `height`: Image height
@@ -175,16 +173,15 @@ Uses the **logistic map** for row-based scrambling. The chaotic nature of the lo
 import pyscramble
 
 # Encrypt
-encrypted = pyscramble.row_logistic_encrypt(pixels, width, height, key=0.5)
+encrypted = pyscramble.row_logistic_encrypt(pixels, key=0.5)
 
 # Decrypt
-decrypted = pyscramble.row_logistic_decrypt(encrypted, width, height, key=0.5)
+decrypted = pyscramble.row_logistic_decrypt(encrypted, key=0.5)
 ```
 
 **Parameters:**
+
 - `pixels`: Input RGBA pixel array with shape `(height, width, 4)`
-- `width`: Image width
-- `height`: Image height
 - `key`: Encryption key (float, should be in range (0, 1))
 
 ### 6. Row-Column Logistic Scramble
@@ -195,16 +192,15 @@ Uses the **logistic map** for both row and column scrambling, providing a more t
 import pyscramble
 
 # Encrypt
-encrypted = pyscramble.row_column_logistic_encrypt(pixels, width, height, key=0.5)
+encrypted = pyscramble.row_column_logistic_encrypt(pixels, key=0.5)
 
 # Decrypt
-decrypted = pyscramble.row_column_logistic_decrypt(encrypted, width, height, key=0.5)
+decrypted = pyscramble.row_column_logistic_decrypt(encrypted, key=0.5)
 ```
 
 **Parameters:**
+
 - `pixels`: Input RGBA pixel array with shape `(height, width, 4)`
-- `width`: Image width
-- `height`: Image height
 - `key`: Encryption key (float, should be in range (0, 1))
 
 ## ⚠️ Important Notes
